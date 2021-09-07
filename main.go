@@ -1,6 +1,7 @@
 package main
 
 import (
+	"PriceService/internal/config"
 	"context"
 	"fmt"
 	"github.com/go-redis/redis/v8"
@@ -8,11 +9,11 @@ import (
 	"time"
 )
 
-func getRedis() *redis.Client {
+func getRedis(cfg *config.Config) *redis.Client {
 	var (
-		RedisAddres    = "redis-14436.c54.ap-northeast-1-2.ec2.cloud.redislabs.com:14436"
-		RedisPassword  = "Drektarov3698!"
-		ReddisUserName = "Admin"
+		RedisAddres    = cfg.RedisAddres
+		RedisPassword  = cfg.RedisPassword
+		ReddisUserName = cfg.RedisUserName
 	)
 
 	client := redis.NewClient(&redis.Options{
@@ -32,20 +33,22 @@ func getRedis() *redis.Client {
 	return client
 }
 
-func main(){
+func main() {
 
-	client := getRedis()
+	cfg := config.NewConfig()
+
+	client := getRedis(cfg)
 
 	ctx := context.Background()
 
 	for {
 		price, err := client.XRead(ctx, &redis.XReadArgs{
-			Streams: []string{"Prices","0"},
+			Streams: []string{"Prices", "0"},
 			Count:   0,
 			Block:   2 * time.Second,
 		}).Result()
 
-		if price == nil{
+		if price == nil {
 			continue
 		}
 
@@ -61,11 +64,12 @@ func main(){
 			}
 		}
 
-		err = client.Do(ctx, "DEL", "Prices").Err();if err != nil{
+		err = client.Do(ctx, "DEL", "Prices").Err()
+		if err != nil {
 			log.WithFields(log.Fields{
-				"handler" : "main",
-				"action" : "clear redis db",
-			}).Errorf("unable to clear redis db %v",err.Error())
+				"handler": "main",
+				"action":  "clear redis db",
+			}).Errorf("unable to clear redis db %v", err.Error())
 		}
 
 		time.Sleep(1 * time.Second)
