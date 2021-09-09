@@ -5,8 +5,9 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
+// Config structure for parse environment variables
 type Config struct {
-	RedisAddres   string `env:"REDISADDR,required,notEmpty"'`
+	RedisAddress  string `env:"REDISADDR,required,notEmpty"`
 	RedisPassword string `env:"REDISPASS,required,notEmpty"`
 	RedisUserName string `env:"REDISUSER,required,notEmpty"`
 }
@@ -23,5 +24,3 @@ func NewConfig() *Config {
 
 	return &cfg
 }
-
-

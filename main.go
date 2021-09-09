@@ -1,78 +1,32 @@
 package main
 
 import (
-	"PriceService/internal/config"
 	"context"
-	"fmt"
-	"github.com/go-redis/redis/v8"
-	log "github.com/sirupsen/logrus"
-	"time"
+	"github.com/INEFFABLE-games/PriceService/internal/config"
+	"github.com/INEFFABLE-games/PriceService/internal/consumer"
+	"github.com/INEFFABLE-games/PriceService/internal/service"
+	"os"
+	"os/signal"
 )
-
-func getRedis(cfg *config.Config) *redis.Client {
-	var (
-		RedisAddres    = cfg.RedisAddres
-		RedisPassword  = cfg.RedisPassword
-		ReddisUserName = cfg.RedisUserName
-	)
-
-	client := redis.NewClient(&redis.Options{
-		Addr:     RedisAddres,
-		Password: RedisPassword,
-		Username: ReddisUserName,
-		DB:       0,
-	})
-
-	res, err := client.Ping(context.Background()).Result()
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	fmt.Println(res)
-
-	return client
-}
 
 func main() {
 
 	cfg := config.NewConfig()
 
-	client := getRedis(cfg)
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
 
-	ctx := context.Background()
+	priceConsumer := consumer.NewPriceConsumer(cfg)
+	priceService := service.NewPriceService(priceConsumer)
 
-	for {
-		price, err := client.XRead(ctx, &redis.XReadArgs{
-			Streams: []string{"Prices", "0"},
-			Count:   0,
-			Block:   2 * time.Second,
-		}).Result()
+	c := make(chan os.Signal, 1)
+	signal.Notify(c, os.Interrupt)
 
-		if price == nil {
-			continue
-		}
+	go func() {
+		priceService.StartStream(ctx)
+	}()
 
-		if err != nil {
-			log.Println(err)
-		} else {
-			for _, val := range price {
-				for k, v := range val.Messages {
-					log.Printf("[%d]: %v \n", k, v)
-				}
-
-				fmt.Println("")
-			}
-		}
-
-		err = client.Do(ctx, "DEL", "Prices").Err()
-		if err != nil {
-			log.WithFields(log.Fields{
-				"handler": "main",
-				"action":  "clear redis db",
-			}).Errorf("unable to clear redis db %v", err.Error())
-		}
-
-		time.Sleep(1 * time.Second)
-	}
-
+	<-c
+	cancel()
+	os.Exit(1)
 }
