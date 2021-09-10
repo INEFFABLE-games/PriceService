@@ -4,8 +4,8 @@ import (
 	"context"
 	"encoding/json"
 	"github.com/INEFFABLE-games/PriceService/internal/consumer"
-	"github.com/INEFFABLE-games/PriceService/internal/protocol"
 	"github.com/INEFFABLE-games/PriceService/models"
+	"github.com/INEFFABLE-games/PriceService/protocol"
 	log "github.com/sirupsen/logrus"
 	"time"
 )

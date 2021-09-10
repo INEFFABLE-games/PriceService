@@ -2,7 +2,7 @@ package server
 
 import (
 	"context"
-	"github.com/INEFFABLE-games/PriceService/internal/protocol"
+	protocol2 "github.com/INEFFABLE-games/PriceService/protocol"
 	log "github.com/sirupsen/logrus"
 	"time"
 )
@@ -11,10 +11,10 @@ type PriceServer struct {
 	pricesChannels map[int]chan []byte
 	ctx            context.Context
 
-	protocol.UnimplementedPriceServiceServer
+	protocol2.UnimplementedPriceServiceServer
 }
 
-func (p *PriceServer) Send(stream protocol.PriceService_SendServer) error {
+func (p *PriceServer) Send(stream protocol2.PriceService_SendServer) error {
 
 	currentIndex := len(p.pricesChannels) + 1
 	currentChannel := make(chan []byte)
@@ -38,7 +38,7 @@ func (p *PriceServer) Send(stream protocol.PriceService_SendServer) error {
 				continue
 			}
 
-			err := stream.Send(&protocol.SendReply{ButchOfPrices: butchOfPrices})
+			err := stream.Send(&protocol2.SendReply{ButchOfPrices: butchOfPrices})
 			if err != nil {
 				log.WithFields(log.Fields{
 					"handler ": "pricesServer(GRPC)",
