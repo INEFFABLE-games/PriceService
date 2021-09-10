@@ -8,13 +8,23 @@ import (
 )
 
 type PriceServer struct {
-	pricesChannel chan []byte
-	ctx           context.Context
+	pricesChannels map[int]chan []byte
+	ctx            context.Context
 
 	protocol.UnimplementedPriceServiceServer
 }
 
 func (p *PriceServer) Send(stream protocol.PriceService_SendServer) error {
+
+	currentIndex := len(p.pricesChannels) + 1
+	currentChannel := make(chan []byte)
+
+	log.WithFields(log.Fields{
+		"handler ": "grpc send",
+		"index ":   currentIndex,
+	}).Info()
+
+	p.pricesChannels[currentIndex] = currentChannel
 
 	ticker := time.NewTicker(1 * time.Second)
 	for {
@@ -23,12 +33,10 @@ func (p *PriceServer) Send(stream protocol.PriceService_SendServer) error {
 			return nil
 		case <-ticker.C:
 
-			butchOfPrices := <-p.pricesChannel
+			butchOfPrices := <-currentChannel
 			if butchOfPrices == nil {
 				continue
 			}
-
-			log.Infof("get new prices %v", butchOfPrices)
 
 			err := stream.Send(&protocol.SendReply{ButchOfPrices: butchOfPrices})
 			if err != nil {
@@ -36,14 +44,17 @@ func (p *PriceServer) Send(stream protocol.PriceService_SendServer) error {
 					"handler ": "pricesServer(GRPC)",
 					"action ":  "send request",
 				}).Errorf("unable to send request %v", err.Error())
+
+				delete(p.pricesChannels, currentIndex)
+				return err
 			}
 		}
 	}
 }
 
-func NewPriceServer(ctx context.Context, c chan []byte) *PriceServer {
+func NewPriceServer(ctx context.Context, c map[int]chan []byte) *PriceServer {
 	return &PriceServer{
-		pricesChannel: c,
-		ctx:           ctx,
+		pricesChannels: c,
+		ctx:            ctx,
 	}
 }

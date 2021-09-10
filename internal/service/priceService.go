@@ -5,10 +5,8 @@ import (
 	"encoding/json"
 	"github.com/INEFFABLE-games/PriceService/internal/consumer"
 	"github.com/INEFFABLE-games/PriceService/internal/protocol"
-	"github.com/INEFFABLE-games/PriceService/internal/server"
 	"github.com/INEFFABLE-games/PriceService/models"
 	log "github.com/sirupsen/logrus"
-	"google.golang.org/grpc"
 	"time"
 )
 
@@ -19,14 +17,7 @@ type PriceService struct {
 }
 
 // StartStream starts infinity cycle to get butch of prices from redis
-func (p *PriceService) StartStream(ctx context.Context) {
-	c := make(chan []byte)
-
-	go func() {
-		grpcServer := grpc.NewServer()
-		pricesServer := server.NewPriceServer(ctx, c)
-		protocol.RegisterPriceServiceServer(grpcServer, pricesServer)
-	}()
+func (p *PriceService) StartStream(ctx context.Context, channels map[int]chan []byte) {
 
 	ticker := time.NewTicker(5 * time.Second)
 	for {
@@ -56,7 +47,9 @@ func (p *PriceService) StartStream(ctx context.Context) {
 						}
 
 						go func() {
-							c <- []byte(v2.(string))
+							for _, v := range channels {
+								v <- []byte(v2.(string))
+							}
 						}()
 
 						for _, price := range butchOfPrices {

@@ -10,6 +10,7 @@ type Config struct {
 	RedisAddress  string `env:"REDISADDR,required,notEmpty"`
 	RedisPassword string `env:"REDISPASS,required,notEmpty"`
 	RedisUserName string `env:"REDISUSER,required,notEmpty"`
+	GrpcPort      string `env:"GRPCPORT,required,notEmpty"`
 }
 
 // NewConfig create new config object.
