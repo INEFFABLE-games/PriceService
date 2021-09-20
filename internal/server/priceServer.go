@@ -8,6 +8,7 @@ import (
 	"time"
 )
 
+// PriceServer structure for PriceServer objects
 type PriceServer struct {
 	pricesChannels map[string]chan []byte
 	ctx            context.Context
@@ -15,6 +16,7 @@ type PriceServer struct {
 	protocol2.UnimplementedPriceServiceServer
 }
 
+// Send is send reply to generator and get butch of prices
 func (p *PriceServer) Send(stream protocol2.PriceService_SendServer) error {
 
 	currentIndex := uuid.NewV4().String()
@@ -56,6 +58,7 @@ func (p *PriceServer) Send(stream protocol2.PriceService_SendServer) error {
 	}
 }
 
+// NewPriceServer creates PriceServer object
 func NewPriceServer(ctx context.Context, c map[string]chan []byte) *PriceServer {
 	return &PriceServer{
 		pricesChannels: c,
