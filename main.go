@@ -28,7 +28,7 @@ func main() {
 	c := make(chan os.Signal, 1)
 	signal.Notify(c, os.Interrupt)
 
-	channels := map[int]chan []byte{}
+	channels := map[string]chan []byte{}
 
 	// Stats new grpc server
 	go func() {

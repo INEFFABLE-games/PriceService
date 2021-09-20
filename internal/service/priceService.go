@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"github.com/INEFFABLE-games/PriceService/internal/consumer"
 	"github.com/INEFFABLE-games/PriceService/models"
-	"github.com/INEFFABLE-games/PriceService/protocol"
 	log "github.com/sirupsen/logrus"
 	"time"
 )
@@ -13,13 +12,12 @@ import (
 // PriceService is structure for PriceService object
 type PriceService struct {
 	consumer *consumer.PriceConsumer
-	server   *protocol.PriceServiceServer
 }
 
 // StartStream starts infinity cycle to get butch of prices from redis
-func (p *PriceService) StartStream(ctx context.Context, channels map[int]chan []byte) {
+func (p *PriceService) StartStream(ctx context.Context, channels map[string]chan []byte) {
 
-	ticker := time.NewTicker(5 * time.Second)
+	ticker := time.NewTicker(10 * time.Second)
 	for {
 		select {
 		case <-ctx.Done():
